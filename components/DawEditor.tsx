@@ -1,6 +1,13 @@
 'use client';
-import Editor from '@monaco-editor/react';
+import Editor, { loader } from '@monaco-editor/react';
 import { useEffect, useState } from 'react';
+
+// Load Monaco editor resources from CDN to avoid bundling large files
+loader.config({
+  paths: {
+    vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs',
+  },
+});
 
 export default function DawEditor() {
   const [code, setCode] = useState('');
