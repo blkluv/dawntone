@@ -66,14 +66,17 @@
 
 ### Monaco Editor について
 
-Monaco のアセットはリポジトリには含めず、CDN から読み込みます。オンライン環境でそのまま利用できますが、オフラインでは動作しません。
+Monaco のアセットは npm インストール時に自動的に `public/vs` へコピーされ、アプリは `/vs` から読み込みます。オフライン環境でも動作します。
+
+もし `vs/*` の取得で 404 エラーが出る場合は、`public/vs` フォルダが存在するか確認してください。`npm install` を実行すると `postinstall` スクリプトによって自動作成されます。
+
+Network タブで `loader.js` などが 200 で返るかどうかを確認すると原因の特定に役立ちます。
 
 
 ## 🛠 環境構築
 
 1. Node.js 18 以上をインストール
-2. ルートディレクトリで `npm install`
-3. `npm run build:parser` で PEG.js のパーサーを生成
-4. `npm test` でサンプル `.daw` ファイルがパースできるか確認
-5. `npm run dev` を実行し http://localhost:3000 を開く
+2. `npm run deploy` を実行して依存関係のインストールとビルドを行う
+3. `npm test` でサンプル `.daw` ファイルがパースできるか確認
+4. `npm run dev` を実行し http://localhost:3000 を開く
 
