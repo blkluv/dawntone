@@ -2,10 +2,13 @@
 import Editor, { loader } from '@monaco-editor/react';
 import { useEffect, useState } from 'react';
 
+// Determine Monaco asset path from environment variable or fallback
+const monacoPath = process.env.NEXT_PUBLIC_MONACO_PATH ?? '/vs';
+
 // Load Monaco editor resources from the local public directory
 loader.config({
   paths: {
-    vs: '/vs',
+    vs: monacoPath,
   },
 });
 
