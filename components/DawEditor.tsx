@@ -2,10 +2,10 @@
 import Editor, { loader } from '@monaco-editor/react';
 import { useEffect, useState } from 'react';
 
-// Load Monaco editor resources from CDN to avoid bundling large files
+// Load Monaco editor resources from the local public directory
 loader.config({
   paths: {
-    vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs',
+    vs: '/vs',
   },
 });
 
