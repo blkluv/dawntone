@@ -68,6 +68,18 @@
 
 Monaco のアセットはリポジトリには含めず、CDN から読み込みます。オンライン環境でそのまま利用できますが、オフラインでは動作しません。
 
+もし `vs/*` の取得で 404 エラーが出る場合は次の点を確認してください。
+
+1. **CDN を利用する**
+   `components/DawEditor.tsx` の `loader.config` で `vs` を CDN パスに設定します（デフォルト）。
+   例: `vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs'`
+
+2. **オフラインで利用する**
+   Monaco のディストリビューションを `public/vs/` に配置し、`loader.config({ paths: { vs: '/vs' } })` とします。
+   `public/vs` 以下に `loader.js`, `editor/editor.main.js`, `worker/editor.worker.js` などが揃っているか確認してください。
+
+Network タブで `loader.js` などが 200 で返るかどうかを確認すると原因の特定に役立ちます。
+
 
 ## 🛠 環境構築
 
