@@ -8,10 +8,23 @@
   "main": "daw_language_grammar.js",
   "scripts": {
     "build:parser": "pegjs -o daw_language_grammar.js daw_language_grammar.pegjs",
-    "test": "node daw_parser_test.js"
+    "test": "node daw_parser_test.js",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
   },
   "dependencies": {
     "fs": "^0.0.1-security",
-    "pegjs": "^0.10.0"
+    "pegjs": "^0.10.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "next": "15.3.3"
+  },
+  "devDependencies": {
+    "typescript": "^5",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19"
   }
 }

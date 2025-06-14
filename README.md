@@ -71,6 +71,5 @@
 2. ルートディレクトリで `npm install`
 3. `npm run build:parser` で PEG.js のパーサーを生成
 4. `npm test` でサンプル `.daw` ファイルがパースできるか確認
-5. `frontend` ディレクトリで `npm install`
-6. `frontend` で `npm run dev` を実行し http://localhost:3000 を開く
+5. `npm run dev` を実行し http://localhost:3000 を開く
 
