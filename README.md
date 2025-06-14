@@ -64,6 +64,10 @@
 | 対応ブラウザ | Chrome / Firefox / Edge / Safari（モバイル含む） |
 | デプロイ | Vercel, localhost:3000 でも動作 |
 
+### Monaco Editor について
+
+Monaco のアセットはリポジトリには含めず、CDN から読み込みます。オンライン環境でそのまま利用できますが、オフラインでは動作しません。
+
 
 ## 🛠 環境構築
 
