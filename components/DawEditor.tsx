@@ -78,7 +78,12 @@ export default function DawEditor() {
     }
   };
 
-  const createTonePartFromTrack = (track: any, key: string, baseVelocity = 90) => {
+  const createTonePartFromTrack = (
+    track: any,
+    key: string,
+    baseVelocity = 90,
+    synthClass: typeof Tone.Synth = Tone.Synth
+  ) => {
     const events: any[] = [];
 
     for (const line of track.lines) {
@@ -101,7 +106,7 @@ export default function DawEditor() {
       }
     }
 
-    const synth = new Tone.PolySynth(Tone.Synth).toDestination();
+    const synth = new Tone.PolySynth(synthClass).toDestination();
     const part = new Tone.Part((time, value) => {
       synth.triggerAttackRelease(value.note, value.duration, time, value.velocity);
     }, events);
@@ -124,6 +129,25 @@ export default function DawEditor() {
     return Tone.Frequency(`${note}${octave}`).toMidi();
   };
 
+  const getSynthClass = (name: string): typeof Tone.Synth => {
+    switch (name.toLowerCase()) {
+      case 'fm':
+      case 'fmsynth':
+        return Tone.FMSynth;
+      case 'am':
+      case 'amsynth':
+        return Tone.AMSynth;
+      case 'duo':
+      case 'duosynth':
+        return Tone.DuoSynth as unknown as typeof Tone.Synth;
+      case 'membrane':
+      case 'membranesynth':
+        return Tone.MembraneSynth;
+      default:
+        return Tone.Synth;
+    }
+  };
+
   const handlePlay = async () => {
     if (isPlaying) return;
     const mod = await import('../daw_language_grammar.js');
@@ -137,8 +161,13 @@ export default function DawEditor() {
     }
 
     const key = ast.headers.find((h: any) => h.key === 'key')?.val || 'C_major';
-    const vel = parseInt(ast.headers.find((h: any) => h.key === 'velocity')?.val || '90', 10);
-    const parts = ast.tracks.map((t: any) => createTonePartFromTrack(t, key, vel));
+    const vel = parseInt(
+      ast.headers.find((h: any) => h.key === 'velocity')?.val || '90',
+      10
+    );
+    const synthName = ast.headers.find((h: any) => h.key === 'synth')?.val || 'synth';
+    const synthClass = getSynthClass(synthName);
+    const parts = ast.tracks.map((t: any) => createTonePartFromTrack(t, key, vel, synthClass));
     partsRef.current = parts;
     const lastBar = Math.max(
       1,
