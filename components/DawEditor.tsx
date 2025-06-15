@@ -37,14 +37,34 @@ export default function DawEditor() {
     setCode(v);
   };
 
+  const handleExport = async () => {
+    const mod = await import('../daw_language_grammar.js');
+    const parser = (mod.default ?? mod).parse;
+    try {
+      const ast = parser(code);
+      const blob = new Blob([JSON.stringify(ast, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'daw.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      alert('Parse error: ' + err.message);
+    }
+  };
+
   return (
-    <Editor
-      className="editor"
-      height="80vh"
-      defaultLanguage="plaintext"
-      value={code}
-      onChange={handleChange}
-      options={{ automaticLayout: true }}
-    />
+    <div>
+      <Editor
+        className="editor"
+        height="80vh"
+        defaultLanguage="plaintext"
+        value={code}
+        onChange={handleChange}
+        options={{ automaticLayout: true }}
+      />
+      <button onClick={handleExport}>Export JSON</button>
+    </div>
   );
 }
