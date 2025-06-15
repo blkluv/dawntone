@@ -92,3 +92,13 @@ Network タブで `loader.js` などが 200 で返るかどうかを確認する
 3. `npm test` でサンプル `.daw` ファイルがパースできるか確認
 4. `npm run dev` を実行し http://localhost:3000 を開く
 
+## CLI 利用方法
+
+グローバルインストールせずに `npx` から実行できます。
+
+```bash
+npx dawrun parse <path/to/file.daw>
+```
+
+指定した `.daw` ファイルを解析し、AST(JSON) を標準出力に出力します。
+

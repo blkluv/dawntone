@@ -6,6 +6,9 @@
   "author": "",
   "type": "module",
   "main": "daw_language_grammar.js",
+  "bin": {
+    "dawrun": "bin/dawrun.js"
+  },
   "scripts": {
     "build:parser": "pegjs -o daw_language_grammar.js daw_language_grammar.pegjs",
     "test": "node daw_parser_test.js",
