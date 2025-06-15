@@ -134,16 +134,23 @@ export default function DawEditor() {
     switch (name.toLowerCase()) {
       case 'fm':
       case 'fmsynth':
-        return Tone.FMSynth;
+        // Tone.FMSynth does not extend Tone.Synth directly,
+        // but PolySynth accepts any Monophonic instrument
+        // constructor. Cast to satisfy the expected type.
+        return Tone.FMSynth as unknown as typeof Tone.Synth;
       case 'am':
       case 'amsynth':
-        return Tone.AMSynth;
+        // Tone.AMSynth extends ModulationSynth which is not a
+        // subclass of Tone.Synth, so cast accordingly.
+        return Tone.AMSynth as unknown as typeof Tone.Synth;
       case 'duo':
       case 'duosynth':
         return Tone.DuoSynth as unknown as typeof Tone.Synth;
       case 'membrane':
       case 'membranesynth':
-        return Tone.MembraneSynth;
+        // MembraneSynth extends Synth with extra options.
+        // Cast to the base constructor type expected here.
+        return Tone.MembraneSynth as unknown as typeof Tone.Synth;
       default:
         return Tone.Synth;
     }
