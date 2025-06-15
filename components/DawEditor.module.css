@@ -1,0 +1,24 @@
+.editorContainer {
+  width: 100%;
+}
+
+.editor {
+  height: 80vh;
+  border: 1px solid #ccc;
+}
+
+.buttonBar {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+}
+
+@media (max-width: 600px) {
+  .editor {
+    height: 60vh;
+  }
+  .buttonBar {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
