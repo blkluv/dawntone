@@ -1,6 +1,7 @@
 'use client';
 import Editor, { loader } from '@monaco-editor/react';
 import { useEffect, useState, useRef } from 'react';
+import styles from './DawEditor.module.css';
 import * as Tone from 'tone';
 
 // Determine Monaco asset path from environment variable or fallback
@@ -188,16 +189,15 @@ export default function DawEditor() {
 
 
   return (
-    <div>
+    <div className={styles.editorContainer}>
       <Editor
-        className="editor"
-        height="80vh"
+        className={styles.editor}
         defaultLanguage="plaintext"
         value={code}
         onChange={handleChange}
         options={{ automaticLayout: true }}
       />
-      <div style={{ marginTop: '8px', display: 'flex', gap: '8px' }}>
+      <div className={styles.buttonBar}>
         <button onClick={handlePlay} disabled={isPlaying}>Play</button>
         <button onClick={handleStop} disabled={!isPlaying}>Stop</button>
         <label>
