@@ -1,6 +1,7 @@
 'use client';
 import Editor, { loader } from '@monaco-editor/react';
 import { useEffect, useState, useRef } from 'react';
+import * as Tone from 'tone';
 
 // Determine Monaco asset path from environment variable or fallback
 const monacoPath = process.env.NEXT_PUBLIC_MONACO_PATH ?? '/vs';
@@ -15,6 +16,9 @@ loader.config({
 export default function DawEditor() {
   const [code, setCode] = useState('');
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const partsRef = useRef<Tone.Part[]>([]);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [loop, setLoop] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem('daw-src');
@@ -54,6 +58,86 @@ export default function DawEditor() {
     }
   };
 
+  const createTonePartFromTrack = (track: any, key: string, baseVelocity = 90) => {
+    const events: any[] = [];
+
+    for (const line of track.lines) {
+      if (line.type === 'note') {
+        const time = `${line.bar}:${Math.floor(line.beat)}:${Math.round((line.beat % 1) * 4)}`;
+        const duration = line.duration;
+        const velocity = (line.velocity ?? baseVelocity) / 127;
+
+        if (line.note === 'x') continue;
+
+        const midi = scaleDegreeToMidi(line.note, key, line.octave);
+        events.push({ time, note: midi, duration, velocity });
+      }
+      if (line.type === 'chord') {
+        const time = `${line.bar}:${Math.floor(line.beat)}:${Math.round((line.beat % 1) * 4)}`;
+        const duration = line.duration;
+        const velocity = (line.velocity ?? baseVelocity) / 127;
+        const midis = line.notes.map((n: any) => scaleDegreeToMidi(n, key, line.octave));
+        events.push({ time, note: midis, duration, velocity });
+      }
+    }
+
+    const synth = new Tone.PolySynth(Tone.Synth).toDestination();
+    const part = new Tone.Part((time, value) => {
+      synth.triggerAttackRelease(value.note, value.duration, time, value.velocity);
+    }, events);
+    part.start(0);
+    return part;
+  };
+
+  const scaleDegreeToMidi = (degree: any, key: string, octave: number) => {
+    const scaleMap: Record<string, string[]> = {
+      C_major: ['C', 'D', 'E', 'F', 'G', 'A', 'B'],
+      A_minor: ['A', 'B', 'C', 'D', 'E', 'F', 'G'],
+    };
+    const scale = scaleMap[key] ?? scaleMap['C_major'];
+    let raw = degree.toString();
+    let accidental = '';
+    if (raw.includes('#')) accidental = '#';
+    if (raw.includes('b')) accidental = 'b';
+    const base = parseInt(raw[0], 10) - 1;
+    const note = scale[base] + accidental;
+    return Tone.Frequency(`${note}${octave}`).toMidi();
+  };
+
+  const handlePlay = async () => {
+    if (isPlaying) return;
+    const mod = await import('../daw_language_grammar.js');
+    const parser = (mod.default ?? mod).parse;
+    let ast: any;
+    try {
+      ast = parser(code);
+    } catch (err: any) {
+      alert('Parse error: ' + err.message);
+      return;
+    }
+
+    const key = ast.headers.find((h: any) => h.key === 'key')?.val || 'C_major';
+    const vel = parseInt(ast.headers.find((h: any) => h.key === 'velocity')?.val || '90', 10);
+    const parts = ast.tracks.map((t: any) => createTonePartFromTrack(t, key, vel));
+    partsRef.current = parts;
+    const lastBar = Math.max(
+      1,
+      ...ast.tracks.flatMap((t: any) => t.lines.map((l: any) => l.bar + 1))
+    );
+    Tone.Transport.loop = loop;
+    Tone.Transport.loopEnd = `${lastBar}:0:0`;
+    Tone.Transport.start();
+    setIsPlaying(true);
+  };
+
+  const handleStop = () => {
+    Tone.Transport.stop();
+    partsRef.current.forEach((p) => p.dispose());
+    partsRef.current = [];
+    setIsPlaying(false);
+  };
+
+
   return (
     <div>
       <Editor
@@ -64,7 +148,14 @@ export default function DawEditor() {
         onChange={handleChange}
         options={{ automaticLayout: true }}
       />
-      <button onClick={handleExport}>Export JSON</button>
+      <div style={{ marginTop: '8px', display: 'flex', gap: '8px' }}>
+        <button onClick={handlePlay} disabled={isPlaying}>Play</button>
+        <button onClick={handleStop} disabled={!isPlaying}>Stop</button>
+        <label>
+          <input type="checkbox" checked={loop} onChange={() => setLoop(!loop)} /> Loop
+        </label>
+        <button onClick={handleExport}>Export JSON</button>
+      </div>
     </div>
   );
 }
