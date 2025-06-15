@@ -151,8 +151,10 @@ export default function DawEditor() {
 
   const handlePlay = async () => {
     if (isPlaying) return;
+
     const mod = await import('../daw_language_grammar.js');
     const parser = (mod.default ?? mod).parse;
+
     let ast: any;
     try {
       ast = parser(code);
@@ -166,14 +168,25 @@ export default function DawEditor() {
       ast.headers.find((h: any) => h.key === 'velocity')?.val || '90',
       10
     );
+    const tempo = parseInt(
+      ast.headers.find((h: any) => h.key === 'tempo')?.val || '120',
+      10
+    );
     const synthName = ast.headers.find((h: any) => h.key === 'synth')?.val || 'synth';
     const synthClass = getSynthClass(synthName);
-    const parts = ast.tracks.map((t: any) => createTonePartFromTrack(t, key, vel, synthClass));
+
+    const parts = ast.tracks.map((t: any) =>
+      createTonePartFromTrack(t, key, vel, synthClass)
+    );
     partsRef.current = parts;
+
     const lastBar = Math.max(
       1,
       ...ast.tracks.flatMap((t: any) => t.lines.map((l: any) => l.bar + 1))
     );
+
+    await Tone.start();
+    Tone.Transport.bpm.value = tempo;
     Tone.Transport.loop = loop;
     Tone.Transport.loopEnd = `${lastBar}:0:0`;
     Tone.Transport.start();
