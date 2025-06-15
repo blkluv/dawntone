@@ -58,6 +58,26 @@ export default function DawEditor() {
     }
   };
 
+  const handleExportMidi = async () => {
+    const mod = await import('../daw_language_grammar.js');
+    const parser = (mod.default ?? mod).parse;
+    try {
+      const ast = parser(code);
+      const midiMod = await import('../jsonToMidi.js');
+      const midi = midiMod.createMidiFromAst(ast);
+      const uint8 = midi.toArray();
+      const blob = new Blob([uint8], { type: 'audio/midi' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'daw.mid';
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      alert('Export error: ' + err.message);
+    }
+  };
+
   const createTonePartFromTrack = (track: any, key: string, baseVelocity = 90) => {
     const events: any[] = [];
 
@@ -155,6 +175,7 @@ export default function DawEditor() {
           <input type="checkbox" checked={loop} onChange={() => setLoop(!loop)} /> Loop
         </label>
         <button onClick={handleExport}>Export JSON</button>
+        <button onClick={handleExportMidi}>Export MIDI</button>
       </div>
     </div>
   );
