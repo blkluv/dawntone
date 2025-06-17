@@ -151,6 +151,20 @@ export default function DawEditor() {
         // MembraneSynth extends Synth with extra options.
         // Cast to the base constructor type expected here.
         return Tone.MembraneSynth as unknown as typeof Tone.Synth;
+      case 'electricpiano':
+        // FM音源のエレピ風プリセット
+        return class extends Tone.FMSynth {
+          constructor() {
+            super({
+              harmonicity: 8,
+              modulationIndex: 2.5,
+              oscillator: { type: 'sine' },
+              envelope: { attack: 0.01, decay: 0.2, sustain: 0.3, release: 1.2 },
+              modulation: { type: 'square' },
+              modulationEnvelope: { attack: 0.2, decay: 0.01, sustain: 1, release: 0.5 }
+            });
+          }
+        } as unknown as typeof Tone.Synth;
       default:
         return Tone.Synth;
     }
