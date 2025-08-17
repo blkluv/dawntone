@@ -37,14 +37,18 @@ export default function DawEditor() {
     };
   }, [code]);
 
-  const handleChange = (value?: string) => {
-    const v = value ?? '';
-    setCode(v);
+  const handleChange = (value?: string) => setCode(value ?? '');
+
+  // Utility to safely get parser from module (handles CommonJS & ES modules)
+  const getParserFromModule = async (path: string) => {
+    const mod = await import(path);
+    // Either mod.default exists or mod itself has parse
+    return (mod as any).parse ?? (mod as any).default?.parse;
   };
 
   const handleExport = async () => {
-    const mod = await import('../daw_language_grammar.js');
-    const parser = (mod.default ?? mod).parse;
+    const parser = await getParserFromModule('../daw_language_grammar.js');
+    if (!parser) return alert('Parser not found in module');
     try {
       const ast = parser(code);
       const blob = new Blob([JSON.stringify(ast, null, 2)], { type: 'application/json' });
@@ -60,12 +64,16 @@ export default function DawEditor() {
   };
 
   const handleExportMidi = async () => {
-    const mod = await import('../daw_language_grammar.js');
-    const parser = (mod.default ?? mod).parse;
+    const parser = await getParserFromModule('../daw_language_grammar.js');
+    if (!parser) return alert('Parser not found in module');
+
     try {
       const ast = parser(code);
       const midiMod = await import('../jsonToMidi.js');
-      const midi = midiMod.createMidiFromAst(ast);
+      const createMidiFromAst = (midiMod as any).createMidiFromAst ?? (midiMod as any).default?.createMidiFromAst;
+      if (!createMidiFromAst) return alert('MIDI function not found');
+
+      const midi = createMidiFromAst(ast);
       const uint8 = midi.toArray();
       const blob = new Blob([uint8], { type: 'audio/midi' });
       const url = URL.createObjectURL(blob);
@@ -92,9 +100,7 @@ export default function DawEditor() {
         const time = `${line.bar}:${Math.floor(line.beat)}:${Math.round((line.beat % 1) * 4)}`;
         const duration = line.duration;
         const velocity = (line.velocity ?? baseVelocity) / 127;
-
         if (line.note === 'x') continue;
-
         const midi = scaleDegreeToMidi(line.note, key, line.octave);
         events.push({ time, note: midi, duration, velocity });
       }
@@ -134,25 +140,17 @@ export default function DawEditor() {
     switch (name.toLowerCase()) {
       case 'fm':
       case 'fmsynth':
-        // Tone.FMSynth does not extend Tone.Synth directly,
-        // but PolySynth accepts any Monophonic instrument
-        // constructor. Cast to satisfy the expected type.
         return Tone.FMSynth as unknown as typeof Tone.Synth;
       case 'am':
       case 'amsynth':
-        // Tone.AMSynth extends ModulationSynth which is not a
-        // subclass of Tone.Synth, so cast accordingly.
         return Tone.AMSynth as unknown as typeof Tone.Synth;
       case 'duo':
       case 'duosynth':
         return Tone.DuoSynth as unknown as typeof Tone.Synth;
       case 'membrane':
       case 'membranesynth':
-        // MembraneSynth extends Synth with extra options.
-        // Cast to the base constructor type expected here.
         return Tone.MembraneSynth as unknown as typeof Tone.Synth;
       case 'electricpiano':
-        // FM音源のエレピ風プリセット
         return class extends Tone.FMSynth {
           constructor() {
             super({
@@ -173,8 +171,8 @@ export default function DawEditor() {
   const handlePlay = async () => {
     if (isPlaying) return;
 
-    const mod = await import('../daw_language_grammar.js');
-    const parser = (mod.default ?? mod).parse;
+    const parser = await getParserFromModule('../daw_language_grammar.js');
+    if (!parser) return alert('Parser not found in module');
 
     let ast: any;
     try {
@@ -185,26 +183,15 @@ export default function DawEditor() {
     }
 
     const key = ast.headers.find((h: any) => h.key === 'key')?.val || 'C_major';
-    const vel = parseInt(
-      ast.headers.find((h: any) => h.key === 'velocity')?.val || '90',
-      10
-    );
-    const tempo = parseInt(
-      ast.headers.find((h: any) => h.key === 'tempo')?.val || '120',
-      10
-    );
+    const vel = parseInt(ast.headers.find((h: any) => h.key === 'velocity')?.val || '90', 10);
+    const tempo = parseInt(ast.headers.find((h: any) => h.key === 'tempo')?.val || '120', 10);
     const synthName = ast.headers.find((h: any) => h.key === 'synth')?.val || 'synth';
     const synthClass = getSynthClass(synthName);
 
-    const parts = ast.tracks.map((t: any) =>
-      createTonePartFromTrack(t, key, vel, synthClass)
-    );
+    const parts = ast.tracks.map((t: any) => createTonePartFromTrack(t, key, vel, synthClass));
     partsRef.current = parts;
 
-    const lastBar = Math.max(
-      1,
-      ...ast.tracks.flatMap((t: any) => t.lines.map((l: any) => l.bar + 1))
-    );
+    const lastBar = Math.max(1, ...ast.tracks.flatMap((t: any) => t.lines.map((l: any) => l.bar + 1)));
 
     await Tone.start();
     Tone.Transport.bpm.value = tempo;
@@ -220,7 +207,6 @@ export default function DawEditor() {
     partsRef.current = [];
     setIsPlaying(false);
   };
-
 
   return (
     <div className={styles.editorContainer}>
